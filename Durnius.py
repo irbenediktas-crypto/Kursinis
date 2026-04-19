@@ -441,14 +441,12 @@ class DurakGame:
 
 
 if __name__ == "__main__":
-
     while True:
         print("\n1. Play")
         print("2. Stats")
         print("3. Exit")
 
-        c = input("Choice: ")
-
+        c = input("Choice: ").strip()
 
         if c == "1":
             game = DurakGame([
@@ -456,11 +454,12 @@ if __name__ == "__main__":
                 AIPlayer("AI_1"),
                 AIPlayer("AI_2")
             ])
-
             game.play()
-
         elif c == "2":
+            # Sukuriame laikiną objektą tik statistikai parodyti
             DurakGame([]).show_stats()
-
+        elif c == "3":
+            print("Goodbye!")
+            break
         else:
-            break 
+            print("Neteisingas pasirinkimas, bandykite dar kartą.")
