@@ -2,7 +2,7 @@ import random
 import json
 import time
 from abc import ABC, abstractmethod
-
+import sys
 # =======================
 # spalvos
 # =======================
@@ -199,9 +199,17 @@ class Defender(Role):
             
             attack = game.table[i][0]
             if isinstance(p, PCPlayer):
-                
+                card = p.choose_defense(attack, game)
+    
+                if card:
+                    print(f"{p} defends {attack} with {card}")
+                    game.table[i] = (attack, card)
+                    p.remove_card(card)
+                else:
+                    print(f"{p} Cannot defend and takes cards!")
+                    game.take_cards(p)
+                    return False
                 continue
-
             
             while True:
                 print(f"\n🛡 Defend {attack}")
@@ -301,10 +309,18 @@ class DurakGame:
 
 
     def play_round(self):
+       
         defender_index = (self.current_attacker_index + 1) % len(self.players)
         defender = self.players[defender_index]
 
-        attackers = [p for i, p in enumerate(self.players) if i != defender_index]
+        attackers = []
+        i = self.current_attacker_index
+        while True:
+            if i != defender_index:
+                attackers.append(self.players[i])
+            i = (i + 1) % len(self.players)
+            if i == self.current_attacker_index:
+                break
 
 
         turn = 0
@@ -340,7 +356,9 @@ class DurakGame:
             self.current_player = defender
 
             if not Defender().play(self):
+                print(f"\n{defender} took the cards. Turn will be skipped!")
                 self.refill()
+                self.skip_turn = defender_index
                 self.current_attacker_index = (defender_index + 1) % len(self.players)
                 return
 
@@ -359,7 +377,7 @@ class DurakGame:
 
     def update_stats(self, winner):
         file = "stats.json"
-        stats = {"games": 0, "human": 0, "ai": 0}
+        stats = {"games": 0, "human": 0, "pc": 0}
     
         try:
             with open(file, "r", encoding='utf-8') as f:
@@ -369,7 +387,7 @@ class DurakGame:
 
         stats["games"] += 1
         if winner == "You": stats["human"] += 1
-        else: stats["ai"] += 1
+        else: stats["pc"] += 1
 
         with open(file, "w", encoding='utf-8') as f:
             json.dump(stats, f, indent=4)
@@ -389,19 +407,19 @@ class DurakGame:
 
             games = stats["games"]
             human = stats["human"]
-            ai = stats["ai"]
+            ai = stats["pc"]
 
 
             print("\n STATISTICS")
             print("-" * 30)
             print(f"Games played: {games}")
             print(f"Human wins: {human}")
-            print(f"AI wins: {ai}")
+            print(f"PC wins: {ai}")
 
 
             if games > 0:
                 print(f"Human win rate: {round(human/games*100,2)}%")
-                print(f"AI win rate: {round(ai/games*100,2)}%")
+                print(f"PC win rate: {round(ai/games*100,2)}%")
 
             print("-" * 30)
 
@@ -418,7 +436,7 @@ class DurakGame:
 
 
         winners = [p for p in self.players if not p.has_cards()]
-        winner = winners[0]._name if winners else "AI"
+        winner = winners[0]._name if winners else "PC"
 
         print("\n GAME OVER")
         print(f" Winner: {winner}")
@@ -441,8 +459,8 @@ if __name__ == "__main__":
         if c == "1":
             game = DurakGame([
                 Player("You"),
-                PCPlayer("AI_1"),
-                PCPlayer("AI_2")
+                PCPlayer("PC_1"),
+                PCPlayer("PC_2")
             ])
             game.play()
         elif c == "2":
