@@ -100,10 +100,10 @@ class Player:
         return self._name
 
 # =======================
-# Ai logika
+# PC logika
 # =======================
 
-class AIPlayer(Player):
+class PCPlayer(Player):
 
     def choose_attack(self, game):
         if not game.table:
@@ -135,113 +135,103 @@ class Attacker(Role):
     def play(self, game):
         p = game.current_player
 
-
-        if isinstance(p, AIPlayer):
+        if isinstance(p, PCPlayer):
+            
             card = p.choose_attack(game)
             if not card:
                 print(f"{p} passes")
                 return False
-
-
             print(f"{p} attacks with {card}")
             game.table.append((card, None))
             p.remove_card(card)
             return True
 
-
-
+        
         print("\n >>>YOUR TURN<<<")
         print("Table:", game.show_table())
         print("Your hand:")
-
-
-
         hand = p.get_hand()
         for i, c in enumerate(hand):
             print(f"{i}:{c}", end="  ")
         print()
 
-        choice = input("Indexes or 'pass': ")
+        while True:  
+            choice = input("Please choose indexes on screen or 'pass': ").strip().lower()
+            if choice == "pass":
+                return False
 
+            try:
+                
+                indexes = list(map(int, choice.split()))
+                
+                
+                if any(i < 0 or i >= len(hand) for i in indexes):
+                    print("This card doesn't exist in your hand!")
+                    continue
+                
+                cards = [hand[i] for i in indexes]
+                
+                
+                if len(set(c.rank for c in cards)) != 1:
+                    print("You can only deal cards of the same rank!")
+                    continue
 
-        if choice == "pass":
-            return False
+                if game.table and cards[0].rank not in game.table_ranks():
+                    print("This card doesn't exist on the table!")
+                    continue
 
+                
+                for c in cards:
+                    game.table.append((c, None))
+                    p.remove_card(c)
+                return True
 
-        indexes = list(map(int, choice.split()))
-        cards = [hand[i] for i in indexes]
-
-
-        if len(set(c.rank for c in cards)) != 1:
-            print("Same rank only!")
-            return self.play(game)
-
-
-        if game.table and cards[0].rank not in game.table_ranks():
-            print("Must match table!")
-            return self.play(game)
-
-
-        for c in cards:
-            game.table.append((c, None))
-            p.remove_card(c)
-
-        return True
-
+            except ValueError:
+                print("Error: Please input a number (f.e., 0 1) or input 'pass'.")
 
 class Defender(Role):
     def play(self, game):
         p = game.current_player
-
+        
         for i in range(len(game.table)):
             if game.table[i][1] is not None:
                 continue
-
+            
             attack = game.table[i][0]
+            if isinstance(p, PCPlayer):
+                
+                continue
 
-            if isinstance(p, AIPlayer):
-                card = p.choose_defense(attack, game)
-                if not card:
-                    print(f"{p} takes cards")
+            
+            while True:
+                print(f"\n🛡 Defend {attack}")
+                print("Table:", game.show_table())
+                hand = p.get_hand()
+                for j, c in enumerate(hand):
+                    print(f"{j}:{c}", end="  ")
+                print()
+
+                choice = input("Index or 'take': ").strip().lower()
+                if choice == "take":
                     game.take_cards(p)
                     return False
 
-
-
-                print(f"{p} defends {attack} with {card}")
-                game.table[i] = (attack, card)
-                p.remove_card(card)
-                continue
-
-
-            print(f"\n🛡 Defend {attack}")
-            print("Table:", game.show_table())
-
-
-            hand = p.get_hand()
-            for j, c in enumerate(hand):
-                print(f"{j}:{c}", end="  ")
-            print()
-
-            choice = input("Index or 'take': ")
-
-
-            if choice == "take":
-                game.take_cards(p)
-                return False
-
-
-            card = hand[int(choice)]
-
-
-            if game.valid_defense(card, attack):
-                game.table[i] = (attack, card)
-                p.remove_card(card)
-
-            else:
-                print("Invalid!")
-                return self.play(game)
-
+                try:
+                    idx = int(choice)
+                    if idx < 0 or idx >= len(hand):
+                        print("Error: This index doesn't exist!")
+                        continue
+                    
+                    card = hand[idx]
+                    if game.valid_defense(card, attack):
+                        game.table[i] = (attack, card)
+                        p.remove_card(card)
+                        break 
+                    else:
+                        print("Error: This card is to weak!")
+                except ValueError:
+                    print("Error: Input a number or 'take'.")
+        
         return True
 
 # =======================
@@ -331,7 +321,7 @@ class DurakGame:
 
 
             success = Attacker().play(self)
-            if isinstance(attacker, AIPlayer) and success:
+            if isinstance(attacker, PCPlayer) and success:
                 time.sleep(1.5)
 
 
@@ -451,12 +441,12 @@ if __name__ == "__main__":
         if c == "1":
             game = DurakGame([
                 Player("You"),
-                AIPlayer("AI_1"),
-                AIPlayer("AI_2")
+                PCPlayer("AI_1"),
+                PCPlayer("AI_2")
             ])
             game.play()
         elif c == "2":
-            # Sukuriame laikiną objektą tik statistikai parodyti
+            
             DurakGame([]).show_stats()
         elif c == "3":
             print("Goodbye!")
