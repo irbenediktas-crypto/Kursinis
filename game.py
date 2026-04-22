@@ -140,15 +140,12 @@ class DurakGame:
 
     def show_stats(self):
         try:
-            with open("stats.json", "r") as f:
-                stats = {}
-                for line in f:
-                    k, v = line.strip().split(":")
-                    stats[k] = int(v)
+            with open("stats.json", "r", encoding='utf-8') as f:
+                stats = json.load(f)
 
-            games = stats["games"]
-            human = stats["human"]
-            ai = stats["pc"]
+            games = stats.get("games", 0)
+            human = stats.get("human", 0)
+            ai = stats.get("pc", 0)
 
             print("\n STATISTICS")
             print("-" * 30)

@@ -1,5 +1,19 @@
 from game import DurakGame
 from player import Player, PCPlayer
+import random
+
+
+PC_names = [
+    "David",   
+    "Alice",   
+    "Robert",  
+    "Kevin",   
+    "Oliver",  
+    "Nathan",  
+    "Isaac",   
+    "Oscar",   
+    "Nolan"    
+]
 
 
 # =======================
@@ -26,8 +40,9 @@ if __name__ == "__main__":
                     print("Invalid input. Please enter a number.")
 
             players = [Player("You")]
-            for i in range(num_ai):
-                players.append(PCPlayer(f"PC_{i+1}"))
+            selected_names = random.sample(PC_names, num_ai)
+            for name in selected_names:
+                players.append(PCPlayer(name))
 
             game = DurakGame(players)
             game.play()
