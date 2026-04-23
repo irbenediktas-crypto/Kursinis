@@ -10,8 +10,8 @@ from role import Attacker, Defender
 # =======================
 
 class DurakGame:
-    def __init__(self, players):
-        self.deck = Deck()
+    def __init__(self, players, ranks=None):
+        self.deck = Deck(ranks)
         self.players = players
         self.table = []
         self.current_attacker_index = 0
@@ -45,7 +45,13 @@ class DurakGame:
         return r
 
     def valid_defense(self, d, a):
-        return (d.suit == a.suit and d.value() > a.value()) or d.suit == self.deck.trump_suit
+        # Same suit: must have higher value
+        if d.suit == a.suit:
+            return d.value() > a.value()
+        # Trump card: beats non-trump, or higher trump beats lower trump
+        if d.suit == self.deck.trump_suit:
+            return a.suit != self.deck.trump_suit or d.value() > a.value()
+        return False
 
     def take_cards(self, p):
         for a, d in self.table:
@@ -63,6 +69,10 @@ class DurakGame:
                 p.add_card(c)
 
     def play_round(self):
+        # Check if game should end before starting new round
+        if self.is_game_over():
+            return
+            
         defender_index = (self.current_attacker_index + 1) % len(self.players)
         defender = self.players[defender_index]
 
@@ -75,15 +85,20 @@ class DurakGame:
             if i == self.current_attacker_index:
                 break
 
+        # Safety check: if no attackers (shouldn't happen), return
+        if not attackers:
+            return
+            
         turn = 0
         passes = 0
         attack_count = 0
-        max_attacks = min(6, len(defender.get_hand()))
+        max_attacks = min(6, len(defender.get_hand())) if defender.get_hand() else 0
 
         while attack_count < max_attacks:
-            self.show_status()
-
             attacker = attackers[turn % len(attackers)]
+            if attacker._name == "You":
+                self.show_status()
+
             self.current_player = attacker
 
             success = Attacker().play(self)
@@ -101,6 +116,8 @@ class DurakGame:
             attack_count += 1
 
             self.current_player = defender
+            if defender._name == "You":
+                self.show_status()
 
             if not Defender().play(self):
                 print(f"\n{defender} took the cards. Turn will be skipped!")
@@ -165,11 +182,24 @@ class DurakGame:
     def play(self):
         print(f"Trump: {self.deck.trump_card}")
 
-        while not self.is_game_over():
+        max_rounds = 1000  # Safety limit to prevent infinite loops
+        round_num = 0
+        
+        while not self.is_game_over() and round_num < max_rounds:
             self.play_round()
+            round_num += 1
+        
+        if round_num >= max_rounds:
+            print("\n Game ended due to round limit.")
 
+        # Find the winner - player with no cards
         winners = [p for p in self.players if not p.has_cards()]
-        winner = winners[0]._name if winners else "PC"
+        
+        if winners:
+            winner = winners[0]._name
+        else:
+            # Edge case: no winner found, pick player with fewest cards
+            winner = min(self.players, key=lambda p: len(p.get_hand()))._name
 
         print("\n GAME OVER")
         print(f" Winner: {winner}")

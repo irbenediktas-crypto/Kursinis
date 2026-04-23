@@ -2,6 +2,11 @@ from abc import ABC, abstractmethod
 from player import PCPlayer
 
 
+def ai_update(message):
+    separator = "-" * 40
+    print(f"\n{separator}\n{message}\n{separator}")
+
+
 # =======================
 # roles
 # =======================
@@ -19,9 +24,9 @@ class Attacker(Role):
         if isinstance(p, PCPlayer):
             card = p.choose_attack(game)
             if not card:
-                print(f"{p} passes")
+                ai_update(f"{p} passes")
                 return False
-            print(f"{p} attacks with {card}")
+            ai_update(f"{p} attacks with {card}")
             game.table.append((card, None))
             p.remove_card(card)
             return True
@@ -81,11 +86,11 @@ class Defender(Role):
                 card = p.choose_defense(attack, game)
 
                 if card:
-                    print(f"{p} defends {attack} with {card}")
+                    ai_update(f"{p} defends {attack} with {card}")
                     game.table[i] = (attack, card)
                     p.remove_card(card)
                 else:
-                    print(f"{p} Cannot defend and takes cards!")
+                    ai_update(f"{p} cannot defend and takes cards!")
                     game.take_cards(p)
                     return False
                 continue

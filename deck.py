@@ -7,8 +7,8 @@ from card import Card, CardFactory
 # =======================
 
 class Deck:
-    def __init__(self):
-        self.cards = CardFactory.create_deck()
+    def __init__(self, ranks=None):
+        self.cards = CardFactory.create_deck(ranks)
         random.shuffle(self.cards)
         self.trump_card = self.cards.pop()
         self.trump_suit = self.trump_card.suit

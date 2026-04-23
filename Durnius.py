@@ -1,5 +1,6 @@
 from game import DurakGame
 from player import Player, PCPlayer
+from card import Card
 import random
 
 
@@ -44,7 +45,11 @@ if __name__ == "__main__":
             for name in selected_names:
                 players.append(PCPlayer(name))
 
-            game = DurakGame(players)
+            full_ranks = Card.RANKS
+            start_index = max(0, 5 - num_ai)
+            ranks = full_ranks[start_index:]
+
+            game = DurakGame(players, ranks)
             game.play()
         elif c == "2":
             DurakGame([]).show_stats()
@@ -52,4 +57,4 @@ if __name__ == "__main__":
             print("Goodbye!")
             break
         else:
-            print("Neteisingas pasirinkimas, bandykite dar kartą.")
+            print("Invalid choice. Please enter 1, 2, or 3.")

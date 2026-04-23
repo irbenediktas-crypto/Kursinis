@@ -31,7 +31,7 @@ class Card:
         'Spades': Fore.WHITE
     }
     RANKS = [
-        '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'
+        '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'
     ]
 
     def __init__(self, suit, rank):
@@ -49,5 +49,6 @@ class Card:
 
 class CardFactory:
     @staticmethod
-    def create_deck():
-        return [Card(s, r) for s in Card.SUITS for r in Card.RANKS]
+    def create_deck(ranks=None):
+        ranks = ranks or Card.RANKS
+        return [Card(s, r) for s in Card.SUITS for r in ranks]
