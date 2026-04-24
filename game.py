@@ -1,13 +1,17 @@
 import json
 import time
+import os
 from deck import Deck
 from player import Player, PCPlayer
 from role import Attacker, Defender
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATS_FILE = os.path.join(BASE_DIR, "stats.json")
 
 # =======================
 # game logic
 # =======================
+
 
 class DurakGame:
     def __init__(self, players, ranks=None):
@@ -45,10 +49,9 @@ class DurakGame:
         return r
 
     def valid_defense(self, d, a):
-        # Same suit: must have higher value
         if d.suit == a.suit:
             return d.value() > a.value()
-        # Trump card: beats non-trump, or higher trump beats lower trump
+        
         if d.suit == self.deck.trump_suit:
             return a.suit != self.deck.trump_suit or d.value() > a.value()
         return False
@@ -69,10 +72,10 @@ class DurakGame:
                 p.add_card(c)
 
     def play_round(self):
-        # Check if game should end before starting new round
+
         if self.is_game_over():
             return
-            
+        
         defender_index = (self.current_attacker_index + 1) % len(self.players)
         defender = self.players[defender_index]
 
@@ -85,16 +88,16 @@ class DurakGame:
             if i == self.current_attacker_index:
                 break
 
-        # Safety check: if no attackers (shouldn't happen), return
         if not attackers:
             return
-            
+        
         turn = 0
         passes = 0
         attack_count = 0
         max_attacks = min(6, len(defender.get_hand())) if defender.get_hand() else 0
 
         while attack_count < max_attacks:
+
             attacker = attackers[turn % len(attackers)]
             if attacker._name == "You":
                 self.show_status()
@@ -134,10 +137,15 @@ class DurakGame:
         self.current_attacker_index = defender_index
 
     def is_game_over(self):
-        return len([p for p in self.players if p.has_cards()]) <= 1
+        if len(self.deck.cards) > 0:
+            return False
+        active_players = [p for p in self.players if p.has_cards()]
+        if len(self.deck.cards) > 0:
+            return False
+        return len(active_players) <= 1
 
     def update_stats(self, winner):
-        file = "stats.json"
+        file = STATS_FILE
         stats = {"games": 0, "human": 0, "pc": 0}
 
         try:
@@ -157,7 +165,7 @@ class DurakGame:
 
     def show_stats(self):
         try:
-            with open("stats.json", "r", encoding='utf-8') as f:
+            with open(STATS_FILE, "r", encoding='utf-8') as f:
                 stats = json.load(f)
 
             games = stats.get("games", 0)
@@ -182,26 +190,27 @@ class DurakGame:
     def play(self):
         print(f"Trump: {self.deck.trump_card}")
 
-        max_rounds = 1000  # Safety limit to prevent infinite loops
+        max_rounds = 1000 
         round_num = 0
         
         while not self.is_game_over() and round_num < max_rounds:
             self.play_round()
-            round_num += 1
+
+        round_num += 1
         
         if round_num >= max_rounds:
             print("\n Game ended due to round limit.")
 
-        # Find the winner - player with no cards
         winners = [p for p in self.players if not p.has_cards()]
-        
         if winners:
             winner = winners[0]._name
         else:
-            # Edge case: no winner found, pick player with fewest cards
+            
             winner = min(self.players, key=lambda p: len(p.get_hand()))._name
 
         print("\n GAME OVER")
         print(f" Winner: {winner}")
 
         self.update_stats(winner)
+        
+    

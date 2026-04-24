@@ -5,8 +5,6 @@ from player import PCPlayer
 def ai_update(message):
     separator = "-" * 40
     print(f"\n{separator}\n{message}\n{separator}")
-
-
 # =======================
 # roles
 # =======================
@@ -24,7 +22,7 @@ class Attacker(Role):
         if isinstance(p, PCPlayer):
             card = p.choose_attack(game)
             if not card:
-                ai_update(f"{p} passes")
+                print(f"{p} passes")
                 return False
             ai_update(f"{p} attacks with {card}")
             game.table.append((card, None))
